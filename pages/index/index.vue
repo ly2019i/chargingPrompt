@@ -26,30 +26,49 @@
 				<view class="uni-label" style="width:180px;">铃声</view>
 			</view>
 			<view class="uni-list-cell-db">
-				<!-- <input class="uni-input" type="text" :disabled="true" placeholder="未获取" :value="level"></input> -->
+				<picker @change="bindPickerChange" :value="index" :range="mp3Arr" range-key="title">
+					<view class="uni-input">{{mp3Arr[index].title}}</view>
+				</picker>
 			</view>
 		</view>
 	</view>
 </template>
 <script>
-	const mp3Src = "../../static/mp3/hasaki.mp3";
-	
 	let bgAudioMannager = uni.getBackgroundAudioManager();
 	bgAudioMannager.title = '致爱丽丝';
 	bgAudioMannager.singer = '暂无';
 	bgAudioMannager.coverImgUrl = 'https://img-cdn-qiniu.dcloud.net.cn/uniapp/audio/music.jpg';
-	bgAudioMannager.src = mp3Src;
 	export default {
 		data() {
 			return {
 				title: 'getChargStatus',
 				status: "",
-				level: 0
+				level: 0,
+				mp3Arr: [{
+					title: "hasaki1",
+					src: "../../static/mp3/hasaki.mp3"
+				}, {
+					title: "daomei",
+					src: "../../static/mp3/daomei.mp3"
+				}, {
+					title: "test",
+					src: "../../static/mp3/test.mp3"
+				}],
+				mp3Src: "",
+				index: 0,
 			}
 		},
 		onLoad: function() {
 			const that = this;
-			this.listen_Battery();
+			uni.setStorageSync("mp3Src", this.mp3Arr[0].src);
+			this.mp3Src = uni.getStorageSync("mp3Src");
+			bgAudioMannager.src = this.mp3Src;
+			if (uni.getStorageSync("chargeStatus") !== "") {
+				uni.setStorageSync("chargeStatus", "discharging")
+			}
+			this.timer = setInterval(() => {
+				that.listen_Battery();
+			}, 1000)
 		},
 		onUnload: function() {
 			this.status = "";
@@ -57,15 +76,30 @@
 		},
 		watch: {
 			status: (d) => {
-				// console.log(d)
 				//	1.0.0版本  未充电前打开提示音可以充电  打开后不行 需要监听充电状态变化 提供切换充电提示音功能 充电提示音要添加可以切换并支持试听功能
-					// bgAudioMannager.play();
-				if (d === "charging") {
-					bgAudioMannager.play();
+				// bgAudioMannager.play();
+				let localStatus = uni.getStorageSync("chargeStatus");
+				if (localStatus !== "charging") {
+					if (d === "charging") {
+						uni.setStorageSync("chargeStatus", "charging")
+						bgAudioMannager.play();
+					}
+				} else {
+					if (d !== "charging") {
+						uni.setStorageSync("chargeStatus", d)
+					}
 				}
 			}
 		},
 		methods: {
+			bindPickerChange(e) {
+				this.index = e.target.value;
+				this.mp3Src = this.mp3Arr[this.index].src;
+				console.log(JSON.stringify(bgAudioMannager))
+				bgAudioMannager.src = this.mp3Src;
+				uni.setStorageSync("mp3Src", this.mp3Src);
+				bgAudioMannager.play();
+			},
 			listen_Battery: function() {
 				const _this = this;
 				try {
@@ -89,8 +123,6 @@
 											break;
 										case BatteryManager.BATTERY_STATUS_CHARGING:
 											statusString = "charging";
-											// console.log(JSON.stringify(bgAudioMannager))
-											bgAudioMannager.play();
 											break;
 										case BatteryManager.BATTERY_STATUS_DISCHARGING:
 											statusString = "discharging";
@@ -112,6 +144,7 @@
 											break;
 									}
 									_this.status = statusString;
+									// console.log(_this.status)
 									_this.level = level;
 									main.unregisterReceiver(receiver);
 								}
