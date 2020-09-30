@@ -60,9 +60,14 @@
 		},
 		onLoad: function() {
 			const that = this;
-			uni.setStorageSync("mp3Src", this.mp3Arr[0].src);
-			this.mp3Src = uni.getStorageSync("mp3Src");
-			bgAudioMannager.src = this.mp3Src;
+			if(uni.getStorageSync("mp3Src") !== ""){
+				uni.setStorageSync("mp3Src", this.mp3Arr[0].src);
+				this.mp3Src = uni.getStorageSync("mp3Src");
+				bgAudioMannager.src = this.mp3Src;
+			}else{
+				this.mp3Src = uni.getStorageSync("mp3Src");
+				bgAudioMannager.src = this.mp3Src;
+			}
 			if (uni.getStorageSync("chargeStatus") !== "") {
 				uni.setStorageSync("chargeStatus", "discharging")
 			}
@@ -77,7 +82,6 @@
 		watch: {
 			status: (d) => {
 				//	1.0.0版本  未充电前打开提示音可以充电  打开后不行 需要监听充电状态变化 提供切换充电提示音功能 充电提示音要添加可以切换并支持试听功能
-				// bgAudioMannager.play();
 				let localStatus = uni.getStorageSync("chargeStatus");
 				if (localStatus !== "charging") {
 					if (d === "charging") {

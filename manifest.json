@@ -54,6 +54,9 @@
             /* SDK配置 */
             "sdkConfigs" : {
                 "ad" : {}
+            },
+            "splashscreen" : {
+                "androidStyle" : "common"
             }
         }
     },
